@@ -10,8 +10,8 @@ import os
 def load_credentials():
     """Load AWS credentials from environment variables"""
     return {
-        'aws_access_key': os.getenv('AWS_ACCESS_KEY_ID'),
-        'aws_secret_key': os.getenv('AWS_SECRET_ACCESS_KEY'),
+        'aws_access_key': os.getenv('ACCESS_KEY_ID'),
+        'aws_secret_key': os.getenv('SECRET_ACCESS_KEY'),
         'agent_id': os.getenv('BEDROCK_AGENT_ID'),
         'agent_alias': os.getenv('BEDROCK_AGENT_ALIAS')
     }
