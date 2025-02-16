@@ -108,9 +108,34 @@ st.title("Task Management Chatbot")
 
 # Display configuration
 st.sidebar.header("Configuration")
-st.sidebar.text(f"Agent ID: {credentials['agent_id']}")
-st.sidebar.text(f"Agent Alias: {credentials['agent_alias']}")
+
 st.sidebar.text(f"Session ID: {session_id}")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("## About This Chatbot")
+st.sidebar.markdown("""
+**Adaptive Task Manager**
+
+I am an Adaptive Task Manager that helps you organize, track, and plan your work using existing API capabilities. I maintain full context of your ongoing tasks, including priorities, dependencies, and progress. When needed, I intelligently interpret your queries and may delegate external questions to a Web Search Agent.
+
+**Rail Guard:**  
+If you ask a question that appears off-topic (for example, about celebrities or general non-work matters), I will ask a clarifying question such as:  
+_"I'm here to help manage your tasks and projects. Could you please explain how that question relates to your work or tasks?"_
+""")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("## How to Use")
+st.sidebar.markdown("""
+1. **Authentication:**  
+   - Enter the secret key provided (from your environment variables) to access the chatbot.
+   
+2. **Task Management:**  
+   - Type your task-related queries or commands (e.g., "Create a new task: Review project proposal", "Show my pending tasks", "Mark task #123 as complete").
+   - I will help organize and manage your tasks based on your input.
+
+3. **General Guidance:**  
+   - If your query doesn’t seem related to work or task management, I may ask for clarification on how it pertains to your projects.
+""")
 
 # Chat interface
 for message in st.session_state.messages:
