@@ -48,7 +48,7 @@ if not st.session_state.authenticated:
         if user_secret == credentials['secret_key']:
             st.session_state.authenticated = True
             st.success("Authentication successful! You may proceed.")
-            st.experimental_rerun()  # Refresh the app to show chat UI
+            st.rerun()  # Refresh the app to show chat UI
         else:
             st.error("Incorrect secret key. Try again.")
     st.stop()
