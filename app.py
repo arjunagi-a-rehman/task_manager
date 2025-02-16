@@ -30,45 +30,6 @@ def initialize_bedrock_client(credentials):
         st.error(f"Failed to initialize Bedrock client: {str(e)}")
         return None
 
-# Load credentials
-credentials = load_credentials()
-if not credentials:
-    st.error("Failed to load credentials. Please check your environment variables.")
-    st.stop()
-
-# Initialize session state for authentication
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-
-# Authentication prompt
-if not st.session_state.authenticated:
-    st.title("Authentication Required 🔒")
-    user_secret = st.text_input("Enter Secret Key:", type="password")
-    if st.button("Submit"):
-        if user_secret == credentials['secret_key']:
-            st.session_state.authenticated = True
-            st.success("Authentication successful! You may proceed.")
-            st.rerun()  # Refresh the app to show chat UI
-        else:
-            st.error("Incorrect secret key. Try again.")
-    st.stop()
-
-# Initialize Bedrock Agent Runtime client
-bedrock_agent = initialize_bedrock_client(credentials)
-if not bedrock_agent:
-    st.error("Failed to initialize Bedrock client")
-    st.stop()
-
-session_id = str(uuid.uuid4())  # Create a unique session ID
-
-# Send current date and time to the agent (only once per session)
-if 'datetime_sent' not in st.session_state:
-    # Get current datetime in UTC (change pytz.utc to desired timezone if needed)
-    current_dt = datetime.now(pytz.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    # Send a system update to the agent with the current date and time
-    _ = get_bedrock_response(f"System update: The current date and time is {current_dt}.")
-    st.session_state.datetime_sent = True
-
 def get_bedrock_response(prompt):
     """Get response from Bedrock agent"""
     try:
@@ -107,6 +68,48 @@ def get_bedrock_response(prompt):
         st.error(f"Error communicating with Bedrock: {str(e)}")
         return None
 
+# Load credentials
+credentials = load_credentials()
+if not credentials:
+    st.error("Failed to load credentials. Please check your environment variables.")
+    st.stop()
+
+# Initialize session state for authentication
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# Authentication prompt
+if not st.session_state.authenticated:
+    st.title("Authentication Required 🔒")
+    user_secret = st.text_input("Enter Secret Key:", type="password")
+    if st.button("Submit"):
+        if user_secret == credentials['secret_key']:
+            st.session_state.authenticated = True
+            st.success("Authentication successful! You may proceed.")
+            st.rerun()  # Refresh the app to show chat UI
+        else:
+            st.error("Incorrect secret key. Try again.")
+    st.stop()
+
+# Initialize Bedrock Agent Runtime client
+bedrock_agent = initialize_bedrock_client(credentials)
+if not bedrock_agent:
+    st.error("Failed to initialize Bedrock client")
+    st.stop()
+
+session_id = str(uuid.uuid4())  # Create a unique session ID
+
+# Send current date and time to the agent (only once per session)
+if 'datetime_sent' not in st.session_state:
+    current_dt = datetime.now(pytz.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    # Send a system update to the agent with the current date and time
+    _ = get_bedrock_response(f"System update: The current date and time is {current_dt}.")
+    st.session_state.datetime_sent = True
+
+# Initialize session state for chat history
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
 # -------------------------
 # Sidebar: Configuration & Info
 # -------------------------
@@ -144,7 +147,7 @@ st.sidebar.markdown("""
 # -------------------------
 st.title("Task Management Chatbot")
 
-# Chat interface: display conversation history
+# Display chat conversation history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
