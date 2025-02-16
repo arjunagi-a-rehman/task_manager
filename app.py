@@ -61,9 +61,13 @@ if not bedrock_agent:
 
 session_id = str(uuid.uuid4())  # Create a unique session ID
 
-# Initialize session state for chat history
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
+# Send current date and time to the agent (only once per session)
+if 'datetime_sent' not in st.session_state:
+    # Get current datetime in UTC (change pytz.utc to desired timezone if needed)
+    current_dt = datetime.now(pytz.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    # Send a system update to the agent with the current date and time
+    _ = get_bedrock_response(f"System update: The current date and time is {current_dt}.")
+    st.session_state.datetime_sent = True
 
 def get_bedrock_response(prompt):
     """Get response from Bedrock agent"""
@@ -103,12 +107,10 @@ def get_bedrock_response(prompt):
         st.error(f"Error communicating with Bedrock: {str(e)}")
         return None
 
-# Streamlit UI
-st.title("Task Management Chatbot")
-
-# Display configuration
+# -------------------------
+# Sidebar: Configuration & Info
+# -------------------------
 st.sidebar.header("Configuration")
-
 st.sidebar.text(f"Session ID: {session_id}")
 
 st.sidebar.markdown("---")
@@ -137,7 +139,12 @@ st.sidebar.markdown("""
    - If your query doesn’t seem related to work or task management, I may ask for clarification on how it pertains to your projects.
 """)
 
-# Chat interface
+# -------------------------
+# Main UI: Chat Interface
+# -------------------------
+st.title("Task Management Chatbot")
+
+# Chat interface: display conversation history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -155,7 +162,9 @@ if prompt := st.chat_input("What task would you like to manage?"):
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
-# Debugging section
+# -------------------------
+# Sidebar: Debugging Information
+# -------------------------
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Debug Information")
 if st.sidebar.button("Check AWS Connection"):
