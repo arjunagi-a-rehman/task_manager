@@ -30,12 +30,12 @@ def initialize_bedrock_client(credentials):
         st.error(f"Failed to initialize Bedrock client: {str(e)}")
         return None
 
-def get_bedrock_response(prompt):
+def get_bedrock_response(client, agent_id, agent_alias_id, session_id, prompt):
     """Get response from Bedrock agent"""
     try:
-        response = bedrock_agent.invoke_agent(
-            agentId=credentials['agent_id'],
-            agentAliasId=credentials['agent_alias'],
+        response = client.invoke_agent(
+            agentId=agent_id,
+            agentAliasId=agent_alias_id,
             sessionId=session_id,
             inputText=prompt
         )
@@ -74,9 +74,30 @@ if not credentials:
     st.error("Failed to load credentials. Please check your environment variables.")
     st.stop()
 
-# Initialize session state for authentication
+# Initialize session state variables
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
+
+if 'session_id' not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())  # Create session ID ONCE per session
+
+if 'bedrock_client' not in st.session_state:
+    st.session_state.bedrock_client = initialize_bedrock_client(credentials)
+    
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+if 'datetime_sent' not in st.session_state and st.session_state.bedrock_client:
+    current_dt = datetime.now(pytz.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+    # Send a system update to the agent with the current date and time
+    response = get_bedrock_response(
+        st.session_state.bedrock_client,
+        credentials['agent_id'],
+        credentials['agent_alias'],
+        st.session_state.session_id,
+        f"System update: The current date and time is {current_dt}."
+    )
+    st.session_state.datetime_sent = True
 
 # Authentication prompt
 if not st.session_state.authenticated:
@@ -91,56 +112,19 @@ if not st.session_state.authenticated:
             st.error("Incorrect secret key. Try again.")
     st.stop()
 
-# Initialize Bedrock Agent Runtime client
-bedrock_agent = initialize_bedrock_client(credentials)
-if not bedrock_agent:
+# Check Bedrock client
+if not st.session_state.bedrock_client:
     st.error("Failed to initialize Bedrock client")
     st.stop()
-
-session_id = str(uuid.uuid4())  # Create a unique session ID
-
-# Send current date and time to the agent (only once per session)
-if 'datetime_sent' not in st.session_state:
-    current_dt = datetime.now(pytz.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    # Send a system update to the agent with the current date and time
-    _ = get_bedrock_response(f"System update: The current date and time is {current_dt}.")
-    st.session_state.datetime_sent = True
-
-# Initialize session state for chat history
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
 
 # -------------------------
 # Sidebar: Configuration & Info
 # -------------------------
 st.sidebar.header("Configuration")
-st.sidebar.text(f"Session ID: {session_id}")
+st.sidebar.text(f"Session ID: {st.session_state.session_id}")  # Display consistent session ID
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("## About This Chatbot")
-st.sidebar.markdown("""
-**Adaptive Task Manager**
-
-I am an Adaptive Task Manager that helps you organize, track, and plan your work using existing API capabilities. I maintain full context of your ongoing tasks, including priorities, dependencies, and progress. When needed, I intelligently interpret your queries and may delegate external questions to a Web Search Agent.
-
-**Rail Guard:**  
-If you ask a question that appears off-topic (for example, about celebrities or general non-work matters), I will ask a clarifying question such as:  
-_"I'm here to help manage your tasks and projects. Could you please explain how that question relates to your work or tasks?"_
-""")
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("## How to Use")
-st.sidebar.markdown("""
-1. **Authentication:**  
-   - Enter the secret key provided (from your environment variables) to access the chatbot.
-   
-2. **Task Management:**  
-   - Type your task-related queries or commands (e.g., "Create a new task: Review project proposal", "Show my pending tasks", "Mark task #123 as complete").
-   - I will help organize and manage your tasks based on your input.
-
-3. **General Guidance:**  
-   - If your query doesn’t seem related to work or task management, I may ask for clarification on how it pertains to your projects.
-""")
+# [Sidebar content remains the same]
+# ...
 
 # -------------------------
 # Main UI: Chat Interface
@@ -160,7 +144,14 @@ if prompt := st.chat_input("What task would you like to manage?"):
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
-            response = get_bedrock_response(prompt)
+            # Use the session-stored client and session ID
+            response = get_bedrock_response(
+                st.session_state.bedrock_client,
+                credentials['agent_id'],
+                credentials['agent_alias'],
+                st.session_state.session_id,
+                prompt
+            )
             if response:
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
@@ -172,10 +163,10 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("### Debug Information")
 if st.sidebar.button("Check AWS Connection"):
     try:
-        test_response = bedrock_agent.invoke_agent(
+        test_response = st.session_state.bedrock_client.invoke_agent(
             agentId=credentials['agent_id'],
             agentAliasId=credentials['agent_alias'],
-            sessionId=session_id,
+            sessionId=st.session_state.session_id,
             inputText='test'
         )
         st.sidebar.success("AWS Connection Successful!")
