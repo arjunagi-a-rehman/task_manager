@@ -155,6 +155,32 @@ if prompt := st.chat_input("What task would you like to manage?"):
             if response:
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
+st.sidebar.markdown("## About This Chatbot")
+st.sidebar.markdown("""
+**Adaptive Task Manager**
+
+I help you organize, track, and plan your work. I keep track of all your tasks—including priorities and progress—and I can even assist with web searches, timeline management, and ensuring overall task completion. If you ask something off-topic (like about celebrities), I'll ask,  
+_"How does that relate to your work?"_
+""")
+st.sidebar.markdown("---")
+st.sidebar.markdown("## How to Use")
+st.sidebar.markdown("""
+1. **Sign In:**  
+   - Enter the secret key provided to log in.
+
+2. **Manage Your Tasks:**  
+   - Create tasks, view your pending tasks, or mark tasks as complete.
+   - Examples:
+       - "Create a new task: Review project proposal"
+       - "Show my pending tasks"
+       - "Mark task #123 as complete"
+
+3. **Extra Help:**  
+   - I can also perform web searches for extra info, manage your timeline, and help ensure tasks are completed.
+
+4. **Stay on Topic:**  
+   - Please keep your questions related to work or projects.
+""")
 
 # -------------------------
 # Sidebar: Debugging Information
